@@ -1,0 +1,8 @@
+{
+  "name": "Xplorer VR",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react",
+  "id": "c660203f"
+}
