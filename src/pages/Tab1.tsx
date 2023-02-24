@@ -10,7 +10,8 @@ import { logIn, wallet } from "ionicons/icons"
 
 const Tab1: React.FC = () => {
   const [user, setUser] = useState<any>({ loggedIn: null })
-  const [name, setName] = useState("") // NEW
+  const [name, setName] = useState("")
+  const [transactionStatus, setTransactionStatus] = useState(null)
 
   useEffect(() => {
     config({
@@ -41,12 +42,66 @@ const Tab1: React.FC = () => {
     setName(profile?.name ?? "No Profile")
   }
 
+  const initAccount = async () => {
+    const transactionId = await fcl.mutate({
+      cadence: `
+        import Profile from 0xProfile
+  
+        transaction {
+          prepare(account: AuthAccount) {
+            // Only initialize the account if it hasn't already been initialized
+            if (!Profile.check(account.address)) {
+              // This creates and stores the profile in the user's account
+              account.save(<- Profile.new(), to: Profile.privatePath)
+  
+              // This creates the public capability that lets applications read the profile's info
+              account.link<&Profile.Base{Profile.Public}>(Profile.publicPath, target: Profile.privatePath)
+            }
+          }
+        }
+      `,
+      payer: fcl.authz,
+      proposer: fcl.authz,
+      authorizations: [fcl.authz],
+      limit: 50,
+    })
+
+    const transaction = await fcl.tx(transactionId).onceSealed()
+    console.log(transaction)
+  }
+
+  const executeTransaction = async () => {
+    const transactionId = await fcl.mutate({
+      cadence: `
+        import Profile from 0xProfile
+
+        transaction(name: String) {
+          prepare(account: AuthAccount) {
+            account
+              .borrow<&Profile.Base{Profile.Owner}>(from: Profile.privatePath)!
+              .setName(name)
+          }
+        }
+      `,
+      args: (arg: any, t: any) => [arg("Flow Developer!", t.String)],
+      payer: fcl.authz,
+      proposer: fcl.authz,
+      authorizations: [fcl.authz],
+      limit: 50,
+    })
+
+    fcl.tx(transactionId).subscribe((res: any) => setTransactionStatus(res.status))
+  }
+
   const LoggedIn = () => {
     return (
       <div>
         <h2>Address: {user?.addr ?? "No Address"}</h2>
-        <div>Profile Name: {name ?? "--"}</div> {/* NEW */}
+        <div>Profile Name: {name ?? "--"}</div> 
+        <div>Transaction Status: {transactionStatus ?? "--"}</div>
         <IonButton onClick={sendQuery}>Send Query</IonButton>
+        <IonButton onClick={initAccount}>Init Account</IonButton>
+        <IonButton onClick={executeTransaction}>Execute Transaction</IonButton>
         <IonButton onClick={fcl.unauthenticate} color="danger">
           Log Out
         </IonButton>
