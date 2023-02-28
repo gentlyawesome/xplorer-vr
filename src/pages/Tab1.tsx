@@ -1,73 +1,18 @@
-import { IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar, useIonRouter } from "@ionic/react"
-import ExploreContainer from "../components/ExploreContainer"
+import { IonButton, IonContent, IonPage, useIonRouter } from "@ionic/react"
 import "./Tab1.css"
 
 // @ts-ignore
 import * as fcl from "@onflow/fcl"
 import { config } from "@onflow/fcl"
 import { useEffect, useState } from "react"
-import { logIn, wallet } from "ionicons/icons"
 import Store from "../helper/Store"
 
 const Tab1: React.FC = () => {
-  const events = [
-    {
-      name: "test1",
-      locations: [
-        {
-          lat: 16.389231,
-          lng: 120.58796,
-        },
-        {
-          lat: 16.389391,
-          lng: 120.587785,
-        },
-        {
-          lat: 16.38932,
-          lng: 120.58822,
-        },
-      ],
-    },
-    {
-      name: "Event 2",
-      locations: [
-        {
-          lat: 16.012312,
-          lng: 206.3893,
-        },
-        {
-          lat: 17.012312,
-          lng: 207.3893,
-        },
-        {
-          lat: 18.012312,
-          lng: 208.3893,
-        },
-      ],
-    },
-    {
-      name: "Event 3",
-      locations: [
-        {
-          lat: 16.012312,
-          lng: 206.3893,
-        },
-        {
-          lat: 17.012312,
-          lng: 207.3893,
-        },
-        {
-          lat: 18.012312,
-          lng: 208.3893,
-        },
-      ],
-    },
-  ]
 
   const [user, setUser] = useState<any>({ loggedIn: null })
   const [name, setName] = useState("")
   const [transactionStatus, setTransactionStatus] = useState(null)
-  const [selectedEvent, setEvent] = useState({})
+  const [events, setEvent] = useState<any>([])
   const router = useIonRouter()
 
   const handleSelect = async (value: any) => {
@@ -82,30 +27,38 @@ const Tab1: React.FC = () => {
       "accessNode.api": "https://rest-testnet.onflow.org", // Mainnet: "https://rest-mainnet.onflow.org"
       "discovery.wallet": "https://fcl-discovery.onflow.org/testnet/authn", // Mainnet: "https://fcl-discovery.onflow.org/authn"
       "0xProfile": "0xba1132bc08f82fe2",
-      "0xXplorer": "0x14ba32c4cb0532ae",
-      "0xEvent": "0x14ba32c4cb0532ae",
+      "0xXplorer": "0x08e5307bcd158b60",
+      "0xEvents": "0x541ae074eb3b46ba",
     })
   }, [])
 
   useEffect(() => {
     setTimeout(() => {
-      fcl.currentUser.subscribe(setUser)
+      fcl.currentUser.subscribe((currentUser: any) => {
+        setUser(currentUser)
+        if (currentUser.addr) {
+          sendQuery()
+          viewEvent()
+        } else {
+          setEvent([])
+        }
+      })
     }, 800)
   }, [])
 
   const viewEvent = async () => {
     const evnt = await fcl.query({
       cadence: `
-        import Event from 0xEvent
-
-        pub fun main(address: Address,id: String ) : Event.ReadOnly? {
-          return Event.read(address, id)
+        import Events from 0xEvents
+           
+        pub fun main(address: Address) : @[Events.Event]? {
+            return <- Events.read(address)
         }
       `,
-      args: (arg: any, t: any) => [arg("0x14ba32c4cb0532ae", t.Address), arg("123", t.String)],
+      args: (arg: any, t: any) => [arg("0x541ae074eb3b46ba", t.Address)],
     })
 
-    console.log(evnt)
+    setEvent(evnt)
   }
 
   const sendQuery = async () => {
@@ -119,7 +72,7 @@ const Tab1: React.FC = () => {
       `,
       args: (arg: any, t: any) => [arg(user.addr, t.Address)],
     })
-    console.log(profile)
+
     setName(profile?.name ?? "No Profile")
   }
 
@@ -148,28 +101,7 @@ const Tab1: React.FC = () => {
     })
 
     const transaction = await fcl.tx(transactionId).onceSealed()
-    console.log(transaction)
   }
-
-  // const viewEvent = async () => {
-  //   const transactionId = await fcl.mutate({
-  //     cadence: `
-  //       import Xplorer from 0xXplorer
-
-  //       transaction() {
-  //         prepare(account: AuthAccount)  {
-  //           let event <- account.load<@Xplorer.Event>(from: /storage/events) ?? panic("not found")
-  //         }
-  //       }
-  //     `,
-  //     payer: fcl.authz,
-  //     proposer: fcl.authz,
-  //     authorizations: [fcl.authz],
-  //     limit: 50,
-  //   })
-
-  //   fcl.tx(transactionId).subscribe((res: any) => console.log(res))
-  // }
 
   const createEvent = async () => {
     const transactionId = await fcl.mutate({
@@ -199,7 +131,6 @@ const Tab1: React.FC = () => {
     })
 
     const transaction = await fcl.tx(transactionId).onceSealed()
-    console.log(transaction)
   }
 
   const executeTransaction = async () => {
@@ -227,15 +158,13 @@ const Tab1: React.FC = () => {
 
   const LoggedIn = () => {
     return (
-      <div>
+      <div className="text-white">
         <h2>Address: {user?.addr ?? "No Address"}</h2>
-        <div>Profile Name: {name ?? "--"}</div>
-        <div>Transaction Status: {transactionStatus ?? "--"}</div>
-        <IonButton onClick={sendQuery}>Send Query</IonButton>
+        {/* <IonButton onClick={sendQuery}>Send Query</IonButton>
         <IonButton onClick={initAccount}>Init Account</IonButton>
         <IonButton onClick={createEvent}>Create Event</IonButton>
         <IonButton onClick={executeTransaction}>Execute Transaction</IonButton>
-        <IonButton onClick={viewEvent}>Query Events</IonButton>
+        <IonButton onClick={viewEvent}>Query Events</IonButton> */}
         <IonButton onClick={fcl.unauthenticate} color="danger">
           Log Out
         </IonButton>
@@ -245,26 +174,29 @@ const Tab1: React.FC = () => {
 
   const LoggedOut = () => {
     return (
-      <IonButtons>
-        <IonButton fill="solid" onClick={fcl.logIn}>
-          <IonIcon slot="start" icon={wallet}></IonIcon>
-          Login
-        </IonButton>
-        <IonButton fill="solid" onClick={fcl.signUp}>
-          <IonIcon slot="start" icon={logIn}></IonIcon>
-          Signup
-        </IonButton>
-      </IonButtons>
+      <>
+        <div className="flex flex-row space-x-4 mb-4">
+          <span className="bg-blue-400 basis-1/2 px-4 py-4 text-center text-white text-2xl rounded-xl" onClick={fcl.logIn}>
+            <i className="fa-solid fa-wallet"></i> Login
+          </span>
+          <span className="bg-blue-400 basis-1/2 px-4 py-4 text-center text-white text-2xl rounded-xl" onClick={fcl.signUp}>
+            <i className="fa-solid fa-right-to-bracket"></i> Signup
+          </span>
+        </div>
+      </>
     )
   }
 
   const Events = () => {
     return (
-      <div className="flex flex-col mt-10">
+      <div className="flex flex-col mt-10 px-4">
         {events &&
-          events.map((event, index) => (
-            <div key={index} onClick={() => handleSelect(event)}>
-              <button className="block bg-blue-400 p-2 text-white rounded-lg mt-5 w-full h-20 text-2xl">{event.name}</button>
+          events.length > 0 &&
+          events.map((event: any) => (
+            <div key={event.uuid} onClick={() => handleSelect(event)}>
+              <button className="block bg-blue-400 p-2 text-white rounded-lg mt-5 w-full h-20 text-2xl">
+                <i className="fa-solid fa-star"></i> {event.name}
+              </button>
             </div>
           ))}
       </div>
@@ -273,9 +205,11 @@ const Tab1: React.FC = () => {
 
   return (
     <IonPage>
-      <IonContent className="ion-padding">
-        <h1>Events</h1>
-        {user.loggedIn ? <LoggedIn /> : <LoggedOut />}
+      <IonContent>
+        <div className="bg-blue-400 p-4">
+          <h1 className="text-white text-4xl">Events</h1>
+          {user.loggedIn ? <LoggedIn /> : <LoggedOut />}
+        </div>
         <Events />
       </IonContent>
     </IonPage>

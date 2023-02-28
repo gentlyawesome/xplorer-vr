@@ -1,15 +1,25 @@
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, useIonViewDidEnter, useIonViewWillEnter } from "@ionic/react"
-import { useEffect, useState } from "react"
+import {
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
+  IonToolbar,
+  useIonViewDidEnter,
+  useIonViewDidLeave,
+  useIonViewWillEnter,
+  useIonViewWillLeave,
+} from "@ionic/react"
+import { useState } from "react"
 import "./Tab2.css"
 import { Geolocation } from "@capacitor/geolocation"
 import * as L from "leaflet"
-import { leaf } from "ionicons/icons"
 import Store from "../helper/Store"
 
 const Tab2: React.FC = () => {
   let leafletMap: any
   const zoom: number = 24
   const [events, setEvents] = useState<any>({})
+  const [mapInstance, setMapInstance] = useState<any>({})
 
   const getEventLocations = async () => {
     setEvents(await Store.get("event"))
@@ -33,43 +43,42 @@ const Tab2: React.FC = () => {
       }, 10)
     })
 
-    leafletMap.setView([lat, lng], zoom)
+    let map = leafletMap.setView([lat, lng], zoom)
 
-    // let myIcon = L.icon({
-    //   iconUrl: "assets/images/location-pin.png",
-    //   iconSize: [40, 40],
-    // })
+    setMapInstance(map)
+
+    let priceIcon = L.icon({
+      iconUrl: "assets/icon/pin-aquired.png",
+      iconSize: [40, 40],
+    })
+
+    let eMarkers: any = []
 
     event.locations.forEach((location: any) => {
-      let eventMarkers = new L.Marker([location.lat, location.lng])
+      let eventMarkers = new L.Marker([location.lat, location.lng], { icon: priceIcon })
+      eMarkers.push(eventMarkers)
       eventMarkers.addTo(leafletMap)
     })
 
-    let marker = new L.Marker([lat, lng])
+    let myIcon = L.icon({
+      iconUrl: "assets/icon/pin-person.png",
+      iconSize: [40, 40],
+    })
+
+    let marker = new L.Marker([lat, lng], { icon: myIcon })
     marker.addTo(leafletMap)
+    eMarkers.push(marker)
 
-    // Geolocation.watchPosition({ timeout: 30000 }, (data: any) => {
-    //   let latlng = L.latLng(data?.coords.latitude, data?.coords.longitude)
-    //   marker.setLatLng(latlng)
-    // })
+    if (eMarkers.length > 0) {
+      var group = new (L.featureGroup as any)(eMarkers)
+      var bounds = L.latLngBounds(group.getBounds())
+      leafletMap.fitBounds(bounds)
+    }
 
-    // const { experience } = await fetchExperience()
-    // setExp(experience)
-    // if (experience && experience.markerPosition) {
-    //   marker.setLatLng(experience.markerPosition)
-    // }
-
-    // leafletMap.on("click", async (data: any) => {
-    //   marker.setLatLng(data.latlng)
-    //   setMarkerPosition({ lat: data.latlng.lat, lng: data.latlng.lng })
-    //   const resp = await fetchPlace(data.latlng.lat, data.latlng.lng)
-    //   const { address } = await resp.json()
-    //   if (address.city) {
-    //     setPlaceName(address.city)
-    //   } else {
-    //     setPlaceName(address.village)
-    //   }
-    // })
+    Geolocation.watchPosition({ timeout: 30000 }, (data: any) => {
+      let latlng = L.latLng(data?.coords.latitude, data?.coords.longitude)
+      marker.setLatLng(latlng)
+    })
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -84,6 +93,12 @@ const Tab2: React.FC = () => {
     printCurrentPosition().then(({ lat, lng }) => {
       loadMap(lat, lng)
     })
+  })
+
+  useIonViewWillLeave(() => {
+    mapInstance.off()
+    mapInstance.remove()
+    setMapInstance({})
   })
 
   return (

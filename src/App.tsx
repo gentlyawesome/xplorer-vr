@@ -24,11 +24,13 @@ import "@ionic/react/css/display.css"
 
 /* Theme variables */
 import "./theme/variables.css"
+import Store from "./helper/Store"
+import { useState } from "react"
 
 setupIonicReact()
 
 const App: React.FC = () => (
-  <IonApp>
+  <IonApp className="bg-white">
     <IonReactRouter>
       <IonTabs>
         <IonRouterOutlet>
