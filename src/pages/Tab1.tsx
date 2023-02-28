@@ -1,4 +1,4 @@
-import { IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar } from "@ionic/react"
+import { IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar, useIonRouter } from "@ionic/react"
 import ExploreContainer from "../components/ExploreContainer"
 import "./Tab1.css"
 
@@ -7,11 +7,75 @@ import * as fcl from "@onflow/fcl"
 import { config } from "@onflow/fcl"
 import { useEffect, useState } from "react"
 import { logIn, wallet } from "ionicons/icons"
+import Store from "../helper/Store"
 
 const Tab1: React.FC = () => {
+  const events = [
+    {
+      name: "test1",
+      locations: [
+        {
+          lat: 16.389231,
+          lng: 120.58796,
+        },
+        {
+          lat: 16.389391,
+          lng: 120.587785,
+        },
+        {
+          lat: 16.38932,
+          lng: 120.58822,
+        },
+      ],
+    },
+    {
+      name: "Event 2",
+      locations: [
+        {
+          lat: 16.012312,
+          lng: 206.3893,
+        },
+        {
+          lat: 17.012312,
+          lng: 207.3893,
+        },
+        {
+          lat: 18.012312,
+          lng: 208.3893,
+        },
+      ],
+    },
+    {
+      name: "Event 3",
+      locations: [
+        {
+          lat: 16.012312,
+          lng: 206.3893,
+        },
+        {
+          lat: 17.012312,
+          lng: 207.3893,
+        },
+        {
+          lat: 18.012312,
+          lng: 208.3893,
+        },
+      ],
+    },
+  ]
+
   const [user, setUser] = useState<any>({ loggedIn: null })
   const [name, setName] = useState("")
   const [transactionStatus, setTransactionStatus] = useState(null)
+  const [selectedEvent, setEvent] = useState({})
+  const router = useIonRouter()
+
+  const handleSelect = async (value: any) => {
+    await Store.set("event", value)
+    setEvent(value)
+
+    router.push("/map", "forward", "push")
+  }
 
   useEffect(() => {
     config({
@@ -194,11 +258,25 @@ const Tab1: React.FC = () => {
     )
   }
 
+  const Events = () => {
+    return (
+      <div className="flex flex-col mt-10">
+        {events &&
+          events.map((event, index) => (
+            <div key={index} onClick={() => handleSelect(event)}>
+              <button className="block bg-blue-400 p-2 text-white rounded-lg mt-5 w-full h-20 text-2xl">{event.name}</button>
+            </div>
+          ))}
+      </div>
+    )
+  }
+
   return (
     <IonPage>
       <IonContent className="ion-padding">
         <h1>Events</h1>
         {user.loggedIn ? <LoggedIn /> : <LoggedOut />}
+        <Events />
       </IonContent>
     </IonPage>
   )

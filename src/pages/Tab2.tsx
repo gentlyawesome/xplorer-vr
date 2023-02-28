@@ -1,73 +1,90 @@
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from "@ionic/react"
+import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar, useIonViewDidEnter, useIonViewWillEnter } from "@ionic/react"
 import { useEffect, useState } from "react"
 import "./Tab2.css"
 import { Geolocation } from "@capacitor/geolocation"
 import * as L from "leaflet"
 import { leaf } from "ionicons/icons"
+import Store from "../helper/Store"
 
 const Tab2: React.FC = () => {
   let leafletMap: any
-  const zoom: number = 24 
+  const zoom: number = 24
+  const [events, setEvents] = useState<any>({})
 
-  useEffect(() => {
-    const printCurrentPosition = async () => {
-      const coordinates = await Geolocation.getCurrentPosition()
+  const getEventLocations = async () => {
+    setEvents(await Store.get("event"))
+    return events
+  }
 
-      return { lat: coordinates.coords.latitude, lng: coordinates.coords.longitude }
-    }
+  const printCurrentPosition = async () => {
+    const coordinates = await Geolocation.getCurrentPosition()
 
-    const loadMap = async (lat: any, lng: any) => {
-      leafletMap = new L.Map("map")
+    return { lat: coordinates.coords.latitude, lng: coordinates.coords.longitude }
+  }
 
-      leafletMap.on("load", () => {
-        setTimeout(() => {
-          leafletMap.invalidateSize()
-        }, 10)
-      })
+  const loadMap = async (lat: any, lng: any) => {
+    let event = await Store.get("event")
 
-      leafletMap.setView([lat, lng], zoom)
+    leafletMap = new L.Map("map")
 
-      // let myIcon = L.icon({
-      //   iconUrl: "assets/images/location-pin.png",
-      //   iconSize: [40, 40],
-      // })
+    leafletMap.on("load", () => {
+      setTimeout(() => {
+        leafletMap.invalidateSize()
+      }, 10)
+    })
 
-      let marker = new L.Marker([lat, lng])
+    leafletMap.setView([lat, lng], zoom)
 
-      marker.addTo(leafletMap)
+    // let myIcon = L.icon({
+    //   iconUrl: "assets/images/location-pin.png",
+    //   iconSize: [40, 40],
+    // })
 
-      Geolocation.watchPosition({ timeout: 30000 }, (data: any) => {
-        let latlng = L.latLng(data?.coords.latitude, data?.coords.longitude)
-        marker.setLatLng(latlng)
-      })
+    event.locations.forEach((location: any) => {
+      let eventMarkers = new L.Marker([location.lat, location.lng])
+      eventMarkers.addTo(leafletMap)
+    })
 
-      // const { experience } = await fetchExperience()
-      // setExp(experience)
-      // if (experience && experience.markerPosition) {
-      //   marker.setLatLng(experience.markerPosition)
-      // }
+    let marker = new L.Marker([lat, lng])
+    marker.addTo(leafletMap)
 
-      // leafletMap.on("click", async (data: any) => {
-      //   marker.setLatLng(data.latlng)
-      //   setMarkerPosition({ lat: data.latlng.lat, lng: data.latlng.lng })
-      //   const resp = await fetchPlace(data.latlng.lat, data.latlng.lng)
-      //   const { address } = await resp.json()
-      //   if (address.city) {
-      //     setPlaceName(address.city)
-      //   } else {
-      //     setPlaceName(address.village)
-      //   }
-      // })
+    // Geolocation.watchPosition({ timeout: 30000 }, (data: any) => {
+    //   let latlng = L.latLng(data?.coords.latitude, data?.coords.longitude)
+    //   marker.setLatLng(latlng)
+    // })
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      }).addTo(leafletMap)
-    }
+    // const { experience } = await fetchExperience()
+    // setExp(experience)
+    // if (experience && experience.markerPosition) {
+    //   marker.setLatLng(experience.markerPosition)
+    // }
 
+    // leafletMap.on("click", async (data: any) => {
+    //   marker.setLatLng(data.latlng)
+    //   setMarkerPosition({ lat: data.latlng.lat, lng: data.latlng.lng })
+    //   const resp = await fetchPlace(data.latlng.lat, data.latlng.lng)
+    //   const { address } = await resp.json()
+    //   if (address.city) {
+    //     setPlaceName(address.city)
+    //   } else {
+    //     setPlaceName(address.village)
+    //   }
+    // })
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(leafletMap)
+  }
+
+  useIonViewWillEnter(() => {
+    getEventLocations()
+  })
+
+  useIonViewDidEnter(() => {
     printCurrentPosition().then(({ lat, lng }) => {
       loadMap(lat, lng)
     })
-  }, [])
+  })
 
   return (
     <IonPage>

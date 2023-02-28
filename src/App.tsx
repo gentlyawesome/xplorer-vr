@@ -1,7 +1,7 @@
 import { Redirect, Route } from "react-router-dom"
 import { IonApp, IonIcon, IonLabel, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs, setupIonicReact } from "@ionic/react"
 import { IonReactRouter } from "@ionic/react-router"
-import { calendar, camera, ellipse, map, square, triangle } from "ionicons/icons"
+import { calendar, camera, map } from "ionicons/icons"
 import Tab1 from "./pages/Tab1"
 import Tab2 from "./pages/Tab2"
 import Tab3 from "./pages/Tab3"
@@ -27,10 +27,6 @@ import "./theme/variables.css"
 
 setupIonicReact()
 
-const checkAuth = () => {
-  console.log("check if disabled")
-}
-
 const App: React.FC = () => (
   <IonApp>
     <IonReactRouter>
@@ -54,11 +50,11 @@ const App: React.FC = () => (
             <IonIcon icon={calendar} />
             <IonLabel>Events</IonLabel>
           </IonTabButton>
-          <IonTabButton tab="map" href="/map" onClick={checkAuth}>
+          <IonTabButton tab="map" href="/map">
             <IonIcon icon={map} />
             <IonLabel>Map</IonLabel>
           </IonTabButton>
-          <IonTabButton tab="ar" href="/ar" onClick={checkAuth}>
+          <IonTabButton tab="ar" href="/ar">
             <IonIcon icon={camera} />
             <IonLabel>AR</IonLabel>
           </IonTabButton>
