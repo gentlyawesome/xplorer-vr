@@ -18,7 +18,6 @@ import Store from "../helper/Store"
 import "./Tab3.css"
 
 const Tab3: React.FC = () => {
-  let watcher: any
   const receiveMessage = (event: any) => {
     console.log("main", event)
   }

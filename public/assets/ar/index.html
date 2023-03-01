@@ -68,13 +68,15 @@
 
         el.addEventListener("click", function () {
           getPosition().then(({ coords }) => {
-            alert(distance(parseFloat(JSON.parse(data)[0]), parseFloat(JSON.parse(data)[1]), parseFloat(coords.latitude), parseFloat(coords.longitude), "N"))
+            const dist = distance(parseFloat(JSON.parse(data)[0]), parseFloat(JSON.parse(data)[1]), parseFloat(coords.latitude), parseFloat(coords.longitude), "N")
+            if(dist < 0.005){
+              alert("Congratz! You were able to get a treasure!")
+              window.parent.postMessage("message", "*")
+            }else{
+              alert("You are to far away from that treasure, get a little closer")
+            }
           })
         })
-
-        // el.addEventListener("mouseleave", function () {
-        //   //alert("goodbye")
-        // })
       },
     })
   </script>
@@ -85,6 +87,7 @@
       window.addEventListener("message", receiveMessage, false)
 
       function receiveMessage(evnt) {
+              window.parent.postMessage("message", "*")
         console.log("iframe", evnt.data.value)
         if (evnt.data.value !== undefined) {
           const arLocations = evnt.data.value.locations.map(
@@ -108,8 +111,6 @@
             "</a-scene>"
         }
       }
-
-      // window.parent.postMessage("test", "*")
     })()
   </script>
 </html>
