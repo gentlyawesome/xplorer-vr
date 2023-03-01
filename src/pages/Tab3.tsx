@@ -1,4 +1,16 @@
-import { IonContent, IonHeader, IonImg, IonPage, IonTitle, IonToolbar, useIonViewDidEnter, useIonViewDidLeave, useIonViewWillEnter } from "@ionic/react"
+import { Geolocation } from "@capacitor/geolocation"
+import {
+  IonContent,
+  IonHeader,
+  IonImg,
+  IonPage,
+  IonTitle,
+  IonToolbar,
+  useIonViewDidEnter,
+  useIonViewDidLeave,
+  useIonViewWillEnter,
+  useIonViewWillLeave,
+} from "@ionic/react"
 import { AScene } from "aframe"
 import { useEffect, useState } from "react"
 import ExploreContainer from "../components/ExploreContainer"
@@ -6,6 +18,7 @@ import Store from "../helper/Store"
 import "./Tab3.css"
 
 const Tab3: React.FC = () => {
+  let watcher: any
   const receiveMessage = (event: any) => {
     console.log("main", event)
   }
@@ -19,7 +32,7 @@ const Tab3: React.FC = () => {
       let event = await Store.get("event")
       const iframe = window.document.getElementById("iframe") as HTMLIFrameElement
       iframe.contentWindow?.postMessage({ message: "message", value: event })
-    }, 5000)
+    }, 1000)
   })
 
   return (

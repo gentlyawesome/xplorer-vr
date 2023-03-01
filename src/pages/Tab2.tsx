@@ -17,6 +17,7 @@ import Store from "../helper/Store"
 
 const Tab2: React.FC = () => {
   let leafletMap: any
+  let watcher: any
   const zoom: number = 24
   const [events, setEvents] = useState<any>({})
   const [mapInstance, setMapInstance] = useState<any>({})
@@ -75,7 +76,7 @@ const Tab2: React.FC = () => {
       leafletMap.fitBounds(bounds)
     }
 
-    Geolocation.watchPosition({ timeout: 30000 }, (data: any) => {
+    watcher = Geolocation.watchPosition({ timeout: 30000 }, (data: any) => {
       let latlng = L.latLng(data?.coords.latitude, data?.coords.longitude)
       marker.setLatLng(latlng)
     })
@@ -96,6 +97,7 @@ const Tab2: React.FC = () => {
   })
 
   useIonViewWillLeave(() => {
+    Geolocation.clearWatch({ id: watcher})
     mapInstance.off()
     mapInstance.remove()
     setMapInstance({})
